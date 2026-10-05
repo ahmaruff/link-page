@@ -55,5 +55,58 @@ function renderLinks(category) {
     });
 }
 
+// ===== FILTER =====
+const filterTabs = document.querySelector("#filter-tabs");
+const tabButtons = filterTabs.querySelectorAll("button");
+
+function handleFilterClick(clickedButton) {
+    // 1. Hanya tombol yang diklik yang ditandai aktif
+    tabButtons.forEach(function (button) {
+        if (button === clickedButton) {
+            button.setAttribute("aria-pressed", "true");
+        } else {
+            button.setAttribute("aria-pressed", "false");
+        }
+    });
+
+    // 2. Tampilkan ulang link sesuai kategori tombol
+    renderLinks(clickedButton.dataset.category);
+}
+
+tabButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+        handleFilterClick(button);
+    });
+});
+
+// ===== TEMA =====
+const themeToggle = document.querySelector("#theme-toggle");
+
+// Menyesuaikan ikon dan label tombol dengan tema yang sedang aktif
+function updateThemeButton() {
+    const isDark = document.documentElement.classList.contains("dark");
+
+    if (isDark) {
+        themeToggle.textContent = "☀️";
+        themeToggle.setAttribute("aria-label", "Ganti ke mode terang");
+    } else {
+        themeToggle.textContent = "🌙";
+        themeToggle.setAttribute("aria-label", "Ganti ke mode gelap");
+    }
+}
+
+themeToggle.addEventListener("click", function () {
+    // toggle() menambah class jika belum ada, menghapus jika sudah ada.
+    // Hasilnya true kalau class "dark" sekarang terpasang.
+    const isDark = document.documentElement.classList.toggle("dark");
+
+    // Simpan pilihan agar bertahan setelah reload
+    localStorage.setItem("linkpage:theme", isDark ? "dark" : "light");
+
+    updateThemeButton();
+});
+
 // ===== MULAI =====
 renderLinks("semua");
+
+updateThemeButton();
