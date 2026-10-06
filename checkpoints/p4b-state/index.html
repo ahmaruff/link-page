@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Saya</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+    </style>
+
+    <script>
+        // Dijalankan SEBELUM halaman tampil, supaya tidak "berkedip" terang dulu.
+        try {
+            const savedTheme = localStorage.getItem("linkpage:theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+            // Pakai pilihan tersimpan; kalau belum ada, ikuti pengaturan sistem
+            if (savedTheme === "dark" || (savedTheme === null && prefersDark)) {
+            document.documentElement.classList.add("dark");
+            }
+        } catch (error) {
+            // localStorage bisa diblokir di beberapa browser; abaikan saja
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+    <button id="theme-toggle" type="button" aria-label="Ganti ke mode gelap" data-action="toggle-theme"
+        class="fixed right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm ring-1 ring-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-slate-900 dark:ring-slate-800 dark:focus-visible:outline-indigo-400">🌙</button>
+
+        
+    <div class="mx-auto max-w-md px-4 py-10 md:max-w-xl md:py-16 lg:grid lg:max-w-5xl lg:grid-cols-2 lg:items-start lg:gap-16">
+        <div class="lg:sticky lg:top-16">
+            <header class="flex flex-col items-center text-center">
+                <img src="avatar.svg" alt="Foto profil Nama Kamu"
+                    class="h-24 w-24 rounded-full shadow ring-4 ring-white dark:ring-slate-800 md:h-28 md:w-28">
+                <h1 class="mt-4 text-2xl font-bold md:text-3xl">Nama Kamu</h1>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Mahasiswa IT · Belajar web development</p>
+            </header>
+
+            <nav aria-label="Media sosial" class="mt-6">
+                <ul class="flex justify-center gap-3">
+                    <li>
+                        <a href="https://github.com/username" aria-label="GitHub"
+                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">🐙</a>
+                    </li>
+                    <li>
+                        <a href="https://instagram.com/username" aria-label="Instagram"
+                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">📸</a>
+                    </li>
+                    <li>
+                        <a href="https://linkedin.com/in/username" aria-label="LinkedIn"
+                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">💼</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <main>
+            <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 lg:mt-0">Link Saya</h2>
+
+            <div id="filter-tabs" class="mt-3 flex flex-wrap gap-2">
+            </div>
+
+            <p id="link-count" aria-live="polite" class="mt-4 text-sm text-slate-500 dark:text-slate-400"></p>
+
+            <ul id="link-list" class="mt-3 space-y-3"></ul>
+
+            <!-- form tambah link: tempatkan di bawah empty state, masih di dalam <main> -->
+            <section class="mt-10" aria-labelledby="add-link-heading">
+                <h2 id="add-link-heading" class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Tambah Link
+                </h2>
+
+                <form id="add-link-form" novalidate
+                    class="mt-3 space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                    <div>
+                        <label for="link-title" class="block text-sm font-medium">Judul</label>
+                        <input id="link-title" type="text"
+                            class="mt-1 w-full rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-300 focus-visible:outline-2 focus-visible:outline-indigo-600 dark:bg-slate-950 dark:ring-slate-700 dark:focus-visible:outline-indigo-400">
+                    </div>
+                    <div>
+                        <label for="link-url" class="block text-sm font-medium">URL</label>
+                        <input id="link-url" type="text" placeholder="https://..."
+                            class="mt-1 w-full rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-300 focus-visible:outline-2 focus-visible:outline-indigo-600 dark:bg-slate-950 dark:ring-slate-700 dark:focus-visible:outline-indigo-400">
+                    </div>
+                    <div>
+                        <label for="link-category" class="block text-sm font-medium">Kategori</label>
+                        <select id="link-category"
+                            class="mt-1 w-full rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-slate-300 focus-visible:outline-2 focus-visible:outline-indigo-600 dark:bg-slate-950 dark:ring-slate-700 dark:focus-visible:outline-indigo-400">
+                            <option value="sosmed">Sosmed</option>
+                            <option value="project">Project</option>
+                            <option value="kontak">Kontak</option>
+                        </select>
+                    </div>
+
+                    <p id="form-error" role="alert" class="hidden text-sm text-rose-600 dark:text-rose-400"></p>
+
+                    <button type="submit"
+                        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-indigo-400">
+                        Tambah
+                    </button>
+                </form>
+            </section>
+        </main>
+
+        <footer class="mt-10 text-center text-xs text-slate-400 dark:text-slate-500 lg:col-span-2">
+            <p>© 2026 Nama Kamu</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
