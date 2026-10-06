@@ -60,7 +60,7 @@ const filterTabs = document.querySelector("#filter-tabs");
 const tabButtons = filterTabs.querySelectorAll("button");
 
 function handleFilterClick(clickedButton) {
-    // 1. Hanya tombol yang diklik yang ditandai aktif
+    // 1. Tandai tombol aktif
     tabButtons.forEach(function (button) {
         if (button === clickedButton) {
             button.setAttribute("aria-pressed", "true");
@@ -69,8 +69,15 @@ function handleFilterClick(clickedButton) {
         }
     });
 
-    // 2. Tampilkan ulang link sesuai kategori tombol
-    renderLinks(clickedButton.dataset.category);
+    // 2. Simpan kategori aktif
+    currentCategory = clickedButton.dataset.category;
+
+    // 3. Gambar ulang daftar
+    renderLinks(currentCategory);
+
+    // PAIN: jangan lupa dua baris di bawah ini!
+    updateCount();
+    updateEmptyState();
 }
 
 tabButtons.forEach(function (button) {
@@ -106,7 +113,79 @@ themeToggle.addEventListener("click", function () {
     updateThemeButton();
 });
 
+// ===== STATE MANUAL =====
+// Kategori aktif harus kita simpan sendiri di variabel ini,
+// dan harus selalu sama dengan tombol tab yang sedang berwarna aktif.
+let currentCategory = "semua";
+
+// ===== COUNTER & EMPTY STATE =====
+const linkCount = document.querySelector("#link-count");
+const emptyState = document.querySelector("#empty-state");
+
+function updateCount() {
+    const total = linkList.children.length;
+    linkCount.textContent = "Menampilkan " + total + " link";
+}
+
+function updateEmptyState() {
+    if (linkList.children.length === 0) {
+        emptyState.classList.remove("hidden");
+    } else {
+        emptyState.classList.add("hidden");
+    }
+}
+
+
+// ===== FORM TAMBAH LINK =====
+const addLinkForm = document.querySelector("#add-link-form");
+const formError = document.querySelector("#form-error");
+
+function showFormError(message) {
+    formError.textContent = message;
+    formError.classList.remove("hidden");
+}
+
+function hideFormError() {
+    formError.textContent = "";
+    formError.classList.add("hidden");
+}
+
+function isValidUrl(url) {
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:");
+}
+
+addLinkForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // cegah halaman reload saat form dikirim
+
+    const title = document.querySelector("#link-title").value.trim();
+    const url = document.querySelector("#link-url").value.trim();
+    const category = document.querySelector("#link-category").value;
+
+    if (title === "") {
+        showFormError("Judul tidak boleh kosong.");
+        return;
+    }
+    if (!isValidUrl(url)) {
+        showFormError("URL harus diawali http://, https://, atau mailto:");
+        return;
+    }
+
+    hideFormError();
+
+    // 1. Tambahkan ke data
+    links.push({ id: Date.now(), title: title, url: url, category: category, icon: "🔗" });
+
+    // 2. Kosongkan form
+    addLinkForm.reset();
+
+    // 3. Perbarui tampilan
+    renderLinks(currentCategory);
+    updateCount();
+    updateEmptyState();
+});
+
 // ===== MULAI =====
 renderLinks("semua");
-
+updateCount();        // PAIN: jangan lupa!
+updateEmptyState();   // PAIN: jangan lupa!
 updateThemeButton();
