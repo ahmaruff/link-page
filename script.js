@@ -5,26 +5,14 @@ const TAB_CLASSES = "rounded-full bg-white px-4 py-1.5 text-sm font-medium text-
 
 const MESSAGE_CLASSES = "rounded-xl bg-white px-5 py-4 text-center text-sm text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800";
 
-// ===== DATA SEMENTARA =====
-const initialLinks = [
-    { id: 1, title: "GitHub", url: "https://github.com/username", category: "sosmed", icon: "🐙" },
-    { id: 2, title: "Instagram", url: "https://instagram.com/username", category: "sosmed", icon: "📸" },
-    { id: 3, title: "LinkedIn", url: "https://linkedin.com/in/username", category: "sosmed", icon: "💼" },
-    { id: 4, title: "Portofolio", url: "https://example.com/portfolio", category: "project", icon: "🎨" },
-    { id: 5, title: "Link Page Ini (Repo)", url: "https://github.com/username/link-page", category: "project", icon: "🧩" },
-    { id: 6, title: "Catatan Kursus", url: "https://example.com/catatan", category: "project", icon: "📓" },
-    { id: 7, title: "Email", url: "mailto:halo@example.com", category: "kontak", icon: "✉️" },
-    { id: 8, title: "WhatsApp", url: "https://wa.me/6281234567890", category: "kontak", icon: "💬" }
-];
-
-
 // ===== STATE =====
 const state = {
-    links: initialLinks,
+    links: [],
     activeCategory: "semua",
     theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-    status: "ready"
+    status: "loading"   // "loading" | "ready" | "error"
 };
+
 
 // Satu-satunya pintu untuk mengubah data
 function setState(changes) {
@@ -64,6 +52,13 @@ function EmptyState() {
     return `<li class="${MESSAGE_CLASSES}">Belum ada link di kategori ini.</li>`;
 }
 
+function LoadingState() {
+    return `<li class="${MESSAGE_CLASSES}">Memuat…</li>`;
+}
+
+function ErrorState() {
+    return `<li class="${MESSAGE_CLASSES}">Gagal memuat data. Buka lewat Live Server atau situs yang sudah di-deploy.</li>`;
+}
 
 // behaviour
 function getVisibleLinks(state) {
@@ -76,9 +71,16 @@ function getVisibleLinks(state) {
 }
 
 function LinkList(state) {
+    if (state.status === "loading") {
+        return LoadingState();
+    }
+    if (state.status === "error") {
+        return ErrorState();
+    }
+
     const visibleLinks = getVisibleLinks(state);
 
-    if (visibleLinks.length === 0) {
+   if (visibleLinks.length === 0) {
         return EmptyState();
     }
 
@@ -106,6 +108,9 @@ function FilterTabs(state) {
 }
 
 function LinkCount(state) {
+    if (state.status !== "ready") {
+        return "";
+    }
     return "Menampilkan " + getVisibleLinks(state).length + " link";
 }
 
@@ -191,5 +196,23 @@ addLinkForm.addEventListener("submit", function (event) {
     setState({ links: [...state.links, newLink] });
 });
 
+
+// ===== DATA =====
+async function loadLinks() {
+    try {
+        const response = await fetch("data/links.json");
+
+        if (!response.ok) {
+            throw new Error("Status " + response.status);
+        }
+
+        const links = await response.json();
+        setState({ links: links, status: "ready" });
+    } catch (error) {
+        setState({ status: "error" });
+    }
+}
+
 // ===== MULAI =====
-render();
+render();      // tampilkan "Memuat…" dulu
+loadLinks();   // lalu ambil datanya
