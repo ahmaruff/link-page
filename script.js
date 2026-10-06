@@ -1,142 +1,153 @@
-// ===== DATA =====
-// Setiap link adalah object. Semua link disimpan dalam satu array.
-const links = [
-    { id: 1, title: "GitHub", url: "https://github.com/ahmaruff", category: "sosmed", icon: "🐙" },
-    { id: 2, title: "Instagram", url: "https://instagram.com/ahmaruff", category: "sosmed", icon: "📸" },
-    { id: 3, title: "LinkedIn", url: "https://linkedin.com/in/ahmaruff", category: "sosmed", icon: "💼" },
-    { id: 4, title: "Portofolio", url: "https://ahmaruff.github.io/blog/portfolio/", category: "project", icon: "🎨" },
-    { id: 5, title: "Link Page Ini (Repo)", url: "https://github.com/ahmaruff/link-page", category: "project", icon: "🧩" },
-    { id: 6, title: "Catatan Kursus", url: "https://ahmaruff.github.io/blog/writing/", category: "project", icon: "📓" },
+// ===== STYLE =====
+const CARD_CLASSES = "flex items-center justify-center gap-3 rounded-xl bg-white px-5 py-4 font-medium shadow-sm ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-slate-900 dark:ring-slate-800 dark:hover:bg-slate-100 dark:hover:text-slate-900 dark:focus-visible:outline-indigo-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+
+const TAB_CLASSES = "rounded-full bg-white px-4 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 aria-pressed:bg-indigo-600 aria-pressed:text-white aria-pressed:ring-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800 dark:focus-visible:outline-indigo-400";
+
+const MESSAGE_CLASSES = "rounded-xl bg-white px-5 py-4 text-center text-sm text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800";
+
+// ===== DATA SEMENTARA =====
+const initialLinks = [
+    { id: 1, title: "GitHub", url: "https://github.com/username", category: "sosmed", icon: "🐙" },
+    { id: 2, title: "Instagram", url: "https://instagram.com/username", category: "sosmed", icon: "📸" },
+    { id: 3, title: "LinkedIn", url: "https://linkedin.com/in/username", category: "sosmed", icon: "💼" },
+    { id: 4, title: "Portofolio", url: "https://example.com/portfolio", category: "project", icon: "🎨" },
+    { id: 5, title: "Link Page Ini (Repo)", url: "https://github.com/username/link-page", category: "project", icon: "🧩" },
+    { id: 6, title: "Catatan Kursus", url: "https://example.com/catatan", category: "project", icon: "📓" },
     { id: 7, title: "Email", url: "mailto:halo@example.com", category: "kontak", icon: "✉️" },
     { id: 8, title: "WhatsApp", url: "https://wa.me/6281234567890", category: "kontak", icon: "💬" }
 ];
 
 
-// ===== STYLE =====
-// Class Tailwind untuk kartu link (sama dengan versi HTML di Pertemuan 2)
-const CARD_CLASSES = "flex items-center justify-center gap-3 rounded-xl bg-white px-5 py-4 font-medium shadow-sm ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-slate-900 dark:ring-slate-800 dark:hover:bg-slate-100 dark:hover:text-slate-900 dark:focus-visible:outline-indigo-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+// ===== STATE =====
+const state = {
+    links: initialLinks,
+    activeCategory: "semua",
+    theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+    status: "ready"
+};
 
-// ===== FUNGSI RENDER =====
-function createLinkItem(link) {
-    const item = document.createElement("li");
-    const anchor = document.createElement("a");
+// Satu-satunya pintu untuk mengubah data
+function setState(changes) {
+    Object.assign(state, changes);
+    render();
+}
 
-    anchor.href = link.url;
-    anchor.className = CARD_CLASSES;
+// HELPERs
+// Mengubah karakter spesial HTML menjadi teks biasa, supaya input pengguna
+// (misalnya "<script>") tidak dijalankan sebagai kode. Ini mencegah serangan XSS.
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 
-    // Link ke website lain dibuka di tab baru. mailto: tidak perlu.
+// ===== KOMPONEN =====
+// Komponen = function yang menerima data dan mengembalikan string HTML
+function LinkCard(link) {
+    let extraAttributes = "";
     if (link.url.startsWith("http")) {
-        anchor.target = "_blank";
-        anchor.rel = "noopener noreferrer";
+        extraAttributes = ' target="_blank" rel="noopener noreferrer"';
     }
 
-    const icon = document.createElement("span");
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = link.icon;
-
-    anchor.appendChild(icon);
-    anchor.appendChild(document.createTextNode(" " + link.title));
-    item.appendChild(anchor);
-
-    return item;
+    return `
+        <li>
+            <a href="${escapeHtml(link.url)}"${extraAttributes} class="${CARD_CLASSES}">
+                <span aria-hidden="true">${escapeHtml(link.icon)}</span> ${escapeHtml(link.title)}
+            </a>
+        </li>`;
 }
 
-const linkList = document.querySelector("#link-list");
+function EmptyState() {
+    return `<li class="${MESSAGE_CLASSES}">Belum ada link di kategori ini.</li>`;
+}
 
-function renderLinks(category) {
-    // 1. Kosongkan daftar lama
-    linkList.innerHTML = "";
 
-    // 2. Tambahkan link yang cocok dengan kategori
-    links.forEach(function (link) {
-        if (category === "semua" || link.category === category) {
-            linkList.appendChild(createLinkItem(link));
-        }
+// behaviour
+function getVisibleLinks(state) {
+    if (state.activeCategory === "semua") {
+        return state.links;
+    }
+    return state.links.filter(function (link) {
+        return link.category === state.activeCategory;
     });
 }
 
-// ===== FILTER =====
+function LinkList(state) {
+    const visibleLinks = getVisibleLinks(state);
+
+    if (visibleLinks.length === 0) {
+        return EmptyState();
+    }
+
+    return visibleLinks
+        .map(function (link) {
+            return LinkCard(link);
+        })
+        .join("");
+}
+
+const TABS = [
+    { category: "semua", label: "Semua" },
+    { category: "sosmed", label: "Sosmed" },
+    { category: "project", label: "Project" },
+    { category: "kontak", label: "Kontak" }
+];
+
+function FilterTabs(state) {
+    return TABS.map(function (tab) {
+        const isActive = tab.category === state.activeCategory;
+        return `
+        <button type="button" data-action="filter" data-category="${tab.category}"
+            aria-pressed="${isActive}" class="${TAB_CLASSES}">${tab.label}</button>`;
+    }).join("");
+}
+
+function LinkCount(state) {
+    return "Menampilkan " + getVisibleLinks(state).length + " link";
+}
+
+// ===== RENDER =====
 const filterTabs = document.querySelector("#filter-tabs");
-const tabButtons = filterTabs.querySelectorAll("button");
-
-function handleFilterClick(clickedButton) {
-    // 1. Tandai tombol aktif
-    tabButtons.forEach(function (button) {
-        if (button === clickedButton) {
-            button.setAttribute("aria-pressed", "true");
-        } else {
-            button.setAttribute("aria-pressed", "false");
-        }
-    });
-
-    // 2. Simpan kategori aktif
-    currentCategory = clickedButton.dataset.category;
-
-    // 3. Gambar ulang daftar
-    renderLinks(currentCategory);
-
-    // PAIN: jangan lupa dua baris di bawah ini!
-    updateCount();
-    updateEmptyState();
-}
-
-tabButtons.forEach(function (button) {
-    button.addEventListener("click", function () {
-        handleFilterClick(button);
-    });
-});
-
-// ===== TEMA =====
+const linkList = document.querySelector("#link-list");
+const linkCount = document.querySelector("#link-count");
 const themeToggle = document.querySelector("#theme-toggle");
 
-// Menyesuaikan ikon dan label tombol dengan tema yang sedang aktif
-function updateThemeButton() {
-    const isDark = document.documentElement.classList.contains("dark");
-
-    if (isDark) {
-        themeToggle.textContent = "☀️";
-        themeToggle.setAttribute("aria-label", "Ganti ke mode terang");
-    } else {
-        themeToggle.textContent = "🌙";
-        themeToggle.setAttribute("aria-label", "Ganti ke mode gelap");
-    }
+function renderTheme() {
+    const isDark = state.theme === "dark";
+    document.documentElement.classList.toggle("dark", isDark); // true = pasang, false = lepas
+    themeToggle.textContent = isDark ? "☀️" : "🌙";
+    themeToggle.setAttribute("aria-label", isDark ? "Ganti ke mode terang" : "Ganti ke mode gelap");
 }
 
-themeToggle.addEventListener("click", function () {
-    // toggle() menambah class jika belum ada, menghapus jika sudah ada.
-    // Hasilnya true kalau class "dark" sekarang terpasang.
-    const isDark = document.documentElement.classList.toggle("dark");
+function render() {
+    filterTabs.innerHTML = FilterTabs(state);
+    linkList.innerHTML = LinkList(state);
+    linkCount.textContent = LinkCount(state);
+    renderTheme();
+}
 
-    // Simpan pilihan agar bertahan setelah reload
-    localStorage.setItem("linkpage:theme", isDark ? "dark" : "light");
-
-    updateThemeButton();
+// ===== EVENT =====
+// Event delegation: pasang SATU listener di wadah tab (#filter-tabs).
+// Tombol di dalamnya digambar ulang terus, tetapi wadahnya tidak,
+// sehingga listener ini tetap hidup.
+filterTabs.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-action='filter']");
+    if (button === null) {
+        return; // yang diklik bukan tombol filter
+    }
+    setState({ activeCategory: button.dataset.category });
 });
 
-// ===== STATE MANUAL =====
-// Kategori aktif harus kita simpan sendiri di variabel ini,
-// dan harus selalu sama dengan tombol tab yang sedang berwarna aktif.
-let currentCategory = "semua";
+themeToggle.addEventListener("click", function () {
+    const newTheme = state.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("linkpage:theme", newTheme);
+    setState({ theme: newTheme });
+});
 
-// ===== COUNTER & EMPTY STATE =====
-const linkCount = document.querySelector("#link-count");
-const emptyState = document.querySelector("#empty-state");
-
-function updateCount() {
-    const total = linkList.children.length;
-    linkCount.textContent = "Menampilkan " + total + " link";
-}
-
-function updateEmptyState() {
-    if (linkList.children.length === 0) {
-        emptyState.classList.remove("hidden");
-    } else {
-        emptyState.classList.add("hidden");
-    }
-}
-
-
-// ===== FORM TAMBAH LINK =====
+// FORM HANDLING
 const addLinkForm = document.querySelector("#add-link-form");
 const formError = document.querySelector("#form-error");
 
@@ -155,37 +166,30 @@ function isValidUrl(url) {
 }
 
 addLinkForm.addEventListener("submit", function (event) {
-    event.preventDefault(); // cegah halaman reload saat form dikirim
+    event.preventDefault();
 
     const title = document.querySelector("#link-title").value.trim();
     const url = document.querySelector("#link-url").value.trim();
     const category = document.querySelector("#link-category").value;
 
     if (title === "") {
-        showFormError("Judul tidak boleh kosong.");
-        return;
+            showFormError("Judul tidak boleh kosong.");
+            return;
     }
+
     if (!isValidUrl(url)) {
-        showFormError("URL harus diawali http://, https://, atau mailto:");
-        return;
+            showFormError("URL harus diawali http://, https://, atau mailto:");
+            return;
     }
 
     hideFormError();
-
-    // 1. Tambahkan ke data
-    links.push({ id: Date.now(), title: title, url: url, category: category, icon: "🔗" });
-
-    // 2. Kosongkan form
     addLinkForm.reset();
 
-    // 3. Perbarui tampilan
-    renderLinks(currentCategory);
-    updateCount();
-    updateEmptyState();
+    // Buat array BARU berisi semua link lama ditambah link baru.
+    // CATATAN: link yang ditambahkan hanya hidup di memori browser dan hilang saat reload.
+    const newLink = { id: Date.now(), title: title, url: url, category: category, icon: "🔗" };
+    setState({ links: [...state.links, newLink] });
 });
 
 // ===== MULAI =====
-renderLinks("semua");
-updateCount();        // PAIN: jangan lupa!
-updateEmptyState();   // PAIN: jangan lupa!
-updateThemeButton();
+render();
